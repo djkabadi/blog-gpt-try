@@ -1,4 +1,5 @@
 import os
+import subprocess
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -107,7 +108,17 @@ def create_post():
         slug = slugify(title)
 
         if image:
-            image.save(os.path.join(app.config['UPLOAD_FOLDER'], image.filename))
+            image_filename = os.path.join(app.config['UPLOAD_FOLDER'], image.filename)
+            image.save(image_filename)
+
+            # Add, commit, and push the uploaded image to GitHub
+            try:
+                subprocess.run(["git", "add", image_filename])
+                subprocess.run(["git", "commit", "-m", "Added uploaded image"])
+                subprocess.run(["git", "push", "origin", "main"])
+            except Exception as e:
+                flash(f"Error pushing image to GitHub: {str(e)}", 'danger')
+
 
         new_post = Post(title=title, content=content, image=image.filename, slug=slug)
         db.session.add(new_post)
