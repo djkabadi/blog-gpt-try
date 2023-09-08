@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create a New Post</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='/css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Create a New Post</h1>
+        <form class="create-form" action="{{ url_for('create_post') }}" method="post" enctype="multipart/form-data">
+            <label for="title">Title:</label><br>
+            <input type="text" id="title" name="title"><br>
+            <label for="content">Content:</label><br>
+            <textarea id="content" name="content"></textarea><br>
+            <label for="image">Image:</label><br>
+            <input type="file" id="image" name="image"><br>
+            <input type="submit" value="Create Post">
+        </form>
+    </div>
+</body>
+</html>

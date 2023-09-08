@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edit Post</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='/css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Edit Post</h1>
+        <form class="create-form" action="{{ url_for('edit_post', slug=post.slug) }}" method="post">
+            <label for="title">Title:</label><br>
+            <input type="text" id="title" name="title" value="{{ post.title }}"><br>
+            <label for="content">Content:</label><br>
+            <textarea id="content" name="content">{{ post.content }}</textarea><br>
+            <input type="submit" value="Save Changes">
+        </form>
+        <a href="{{ url_for('index') }}">Cancel</a>
+    </div>
+</body>
+</html>
