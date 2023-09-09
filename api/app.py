@@ -107,6 +107,21 @@ class Post(db.Model):
     slug = db.Column(db.String(100), unique=True, nullable=False)
 
 # Create post and delete post routes
+The `create_post` route you provided seems to be correctly structured for creating a new blog post with a title, content, and an associated image. However, there are a few areas to double-check for potential issues:
+
+1. **GitHub Token**: Ensure that the `github_token` variable is defined and contains a valid GitHub Personal Access Token with the necessary permissions to create and update files in the GitHub repository.
+
+2. **File Path**: Verify that the `file_path` variable is constructed correctly, including the folder structure and file extension. It should match the structure of your GitHub repository.
+
+3. **Image Content**: Make sure that `image_content` contains the binary content of the uploaded image. You can print its length to verify that it's not empty.
+
+4. **GitHub Repository**: Ensure that the GitHub repository specified in `repo_owner` and `repo_name` variables exists and is accessible by the provided token.
+
+5. **Database Commit**: Verify that the `new_post` object is successfully created and committed to the database. You can add some print statements to check if it's being executed as expected.
+
+Here's an updated version of your `create_post` route with some additional debugging statements:
+
+```python
 @app.route('/create', methods=['GET', 'POST'])
 @login_required
 @admin_required
@@ -118,13 +133,7 @@ def create_post():
         slug = slugify(title)
 
         if image:
-            # Save the image to a temporary location on the server
-            image_filename = os.path.join(app.config['UPLOAD_FOLDER'], image.filename)
-            image.save(image_filename)
-
-            # Read the image content
-            with open(image_filename, 'rb') as f:
-                image_content = f.read()
+            image_content = image.read()
 
             # Commit the image to GitHub
             repo_owner = 'djkabadi'
@@ -132,8 +141,11 @@ def create_post():
             file_path = f'images/{slugify(title)}.jpg'  # Adjust the path as needed
             commit_message = 'Added uploaded image'
 
-            if create_github_commit(repo_owner, repo_name, file_path, image_content, commit_message):
-                # Get the image URL from GitHub
+            print(f"File Path: {file_path}")
+            print(f"Image Content Length: {len(image_content)}")
+
+            if create_github_commit(repo_owner, repo_name, file_path, image_content, commit_message, github_token):
+                # Construct the GitHub image URL
                 image_url = f'https://raw.githubusercontent.com/{repo_owner}/{repo_name}/main/{file_path}'
 
                 # Create a new post with the image URL
@@ -144,11 +156,15 @@ def create_post():
                 flash('Image uploaded and post created successfully!', 'success')
             else:
                 flash('Error committing image to GitHub', 'danger')
+        else:
+            flash('No image uploaded', 'danger')
 
         return redirect(url_for('index'))
 
     return render_template('create_post.html')
+```
 
+This updated version includes print statements to help you debug the execution and identify any potential issues. Please check the console output for these print statements while testing the route to see if everything is functioning as expected. If you encounter any errors or unexpected behavior, please provide the specific error messages or issues you're facing so that I can assist you further.
 
 @app.route('/delete/<string:slug>', methods=['GET', 'POST'])
 @login_required
