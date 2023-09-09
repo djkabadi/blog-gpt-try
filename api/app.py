@@ -22,7 +22,7 @@ login_manager.login_view = 'admin_login'
 
 # Define the GitHub API endpoint and token
 GITHUB_API_URL = 'https://api.github.com'
-github_token = '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'
+github_token = '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'
 
 # Helper function to commit a file to a GitHub repository
 def create_github_commit(repo_owner, repo_name, file_path, file_content, commit_message, github_token):
