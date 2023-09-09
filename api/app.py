@@ -1,5 +1,6 @@
 import os
-import subprocess
+import base64
+import requests
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -8,12 +9,10 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, cur
 from functools import wraps
 from slugify import slugify
 
-
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'ogonda'
+app.config['SECRET_KEY'] = 'ogosh'
 app.config['UPLOAD_FOLDER'] = 'api/static/images'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://sql11645133:zdSP4TbvUF@sql11.freesqldatabase.com:3306/sql11645133'
-
 
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
@@ -21,7 +20,28 @@ migrate = Migrate(app, db)
 login_manager = LoginManager(app)
 login_manager.login_view = 'admin_login'
 
+# Define the GitHub API endpoint and token
+GITHUB_API_URL = 'https://api.github.com'
+GITHUB_TOKEN = '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'
 
+# Helper function to commit a file to a GitHub repository
+def create_github_commit(repo_owner, repo_name, file_path, file_content, commit_message):
+    headers = {
+        'Authorization': f'token {GITHUB_TOKEN}',
+        'Accept': 'application/vnd.github.v3+json'
+    }
+    data = {
+        'message': commit_message,
+        'content': base64.b64encode(file_content).decode('utf-8')  # Encode to base64
+    }
+    api_url = f'https://api.github.com/repos/{repo_owner}/{repo_name}/contents/{file_path}'
+    
+    response = requests.put(api_url, headers=headers, json=data)
+
+
+    return response.status_code == 201
+
+# User model for Admin
 class Admin(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
@@ -47,16 +67,12 @@ def admin_register():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-
         new_admin = Admin(username=username, password_hash=hashed_password)
         db.session.add(new_admin)
         db.session.commit()
-
         flash('Admin account created successfully!', 'success')
         return redirect(url_for('admin_login'))
-
     return render_template('admin_register.html')
 
 # Admin login route
@@ -64,19 +80,15 @@ def admin_register():
 def admin_login():
     if current_user.is_authenticated:
         return redirect(url_for('index'))
-
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-
         admin = Admin.query.filter_by(username=username).first()
-
         if admin and bcrypt.check_password_hash(admin.password_hash, password):
             login_user(admin)
             return redirect(url_for('index'))
         else:
             flash('Admin login failed. Please check your credentials.', 'danger')
-
     return render_template('admin_login.html')
 
 # Admin logout route
@@ -86,7 +98,7 @@ def admin_logout():
     logout_user()
     return redirect(url_for('index'))
 
-# Create the 'Post' model for representing blog posts
+# Blog post model
 class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
@@ -103,45 +115,51 @@ def create_post():
         title = request.form['title']
         content = request.form['content']
         image = request.files['image']
-
-        # Generate the slug from the post title
         slug = slugify(title)
 
         if image:
+            # Save the image to a temporary location on the server
             image_filename = os.path.join(app.config['UPLOAD_FOLDER'], image.filename)
             image.save(image_filename)
 
-            # Add, commit, and push the uploaded image to GitHub
-            try:
-                subprocess.run(["git", "add", image_filename])
-                subprocess.run(["git", "commit", "-m", "Added uploaded image"])
-                subprocess.run(["git", "push", "origin", "main"])
-            except Exception as e:
-                flash(f"Error pushing image to GitHub: {str(e)}", 'danger')
+            # Read the image content
+            with open(image_filename, 'rb') as f:
+                image_content = f.read()
 
+            # Commit the image to GitHub
+            repo_owner = 'djkabadi'
+            repo_name = 'mapica'
+            file_path = f'images/{slugify(title)}.jpg'  # Adjust the path as needed
+            commit_message = 'Added uploaded image'
 
-        new_post = Post(title=title, content=content, image=image.filename, slug=slug)
-        db.session.add(new_post)
-        db.session.commit()
+            if create_github_commit(repo_owner, repo_name, file_path, image_content, commit_message):
+                # Get the image URL from GitHub
+                image_url = f'https://raw.githubusercontent.com/{repo_owner}/{repo_name}/main/{file_path}'
 
-        flash('Post created successfully!', 'success')
+                # Create a new post with the image URL
+                new_post = Post(title=title, content=content, image=image_url, slug=slug)
+                db.session.add(new_post)
+                db.session.commit()
+
+                flash('Image uploaded and post created successfully!', 'success')
+            else:
+                flash('Error committing image to GitHub', 'danger')
+
         return redirect(url_for('index'))
 
     return render_template('create_post.html')
+
 
 @app.route('/delete/<string:slug>', methods=['GET', 'POST'])
 @login_required
 @admin_required
 def delete_post(slug):
     post = Post.query.filter_by(slug=slug).first()
-
     if request.method == 'POST':
         db.session.delete(post)
         db.session.commit()
-
         flash('Post deleted successfully!', 'success')
         return redirect(url_for('index'))
-
     return render_template('delete_post.html', post=post)
 
 @app.route('/edit/<string:slug>', methods=['GET', 'POST'])
@@ -149,28 +167,20 @@ def delete_post(slug):
 @admin_required
 def edit_post(slug):
     post = Post.query.filter_by(slug=slug).first()
-
     if not post:
         flash('Post not found', 'danger')
         return redirect(url_for('index'))
-
     if request.method == 'POST':
         new_title = request.form['title']
         new_content = request.form['content']
-
-        # Generate a new slug based on the updated title
         new_slug = slugify(new_title)
-
         post.title = new_title
         post.content = new_content
-        post.slug = new_slug  # Update the slug with the new one
+        post.slug = new_slug
         db.session.commit()
-
         flash('Post updated successfully!', 'success')
         return redirect(url_for('index'))
-
     return render_template('edit_post.html', post=post)
-
 
 # Default route to view all posts
 @app.route('/')
@@ -178,13 +188,11 @@ def index():
     posts = Post.query.order_by(Post.id.desc()).all()
     return render_template('index.html', posts=posts)
 
-
 # Route to display the content of a blog post
 @app.route('/mixxes/<string:slug>')
 def content(slug):
     post = Post.query.filter_by(slug=slug).first()
     return render_template('mixxes.html', post=post)
-
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
