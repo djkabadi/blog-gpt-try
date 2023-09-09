@@ -11,7 +11,7 @@ from slugify import slugify
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'ogosh'
-app.config['UPLOAD_FOLDER'] = 'api/static/images'
+#app.config['UPLOAD_FOLDER'] = 'api/static/images'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://sql11645133:zdSP4TbvUF@sql11.freesqldatabase.com:3306/sql11645133'
 
 db = SQLAlchemy(app)
