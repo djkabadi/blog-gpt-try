@@ -195,7 +195,7 @@ def delete_post(slug):
     if request.method == 'POST':
         # Delete the image from GitHub when post is deleted
         repo_owner = 'djkabadi'
-        repo_name = 'mapica'
+        repo_name = 'pikipiki'
         file_path = f'images/{slugify(post.title)}.jpg'  # Adjust the path as needed
         commit_message = 'Deleted image'
 
