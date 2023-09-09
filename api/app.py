@@ -11,7 +11,7 @@ from slugify import slugify
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'ogosh'
-#app.config['UPLOAD_FOLDER'] = 'api/static/images'
+# app.config['UPLOAD_FOLDER'] = 'api/static/images'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://sql11645133:zdSP4TbvUF@sql11.freesqldatabase.com:3306/sql11645133'
 
 db = SQLAlchemy(app)
@@ -22,21 +22,22 @@ login_manager.login_view = 'admin_login'
 
 # Define the GitHub API endpoint and token
 GITHUB_API_URL = 'https://api.github.com'
-GITHUB_TOKEN = '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'
+github_token = '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'
 
 # Helper function to commit a file to a GitHub repository
-def create_github_commit(repo_owner, repo_name, file_path, file_content, commit_message):
+def create_github_commit(repo_owner, repo_name, file_path, file_content, commit_message, github_token):
     headers = {
-        'Authorization': f'token {GITHUB_TOKEN}',
+        'Authorization': f'token {github_token}',
         'Accept': 'application/vnd.github.v3+json'
     }
     data = {
         'message': commit_message,
         'content': base64.b64encode(file_content).decode('utf-8')  # Encode to base64
     }
-    api_url = f'https://api.github.com/repos/{repo_owner}/{repo_name}/contents/{file_path}'
+    api_url = f'{GITHUB_API_URL}/repos/{repo_owner}/{repo_name}/contents/{file_path}'
     
     response = requests.put(api_url, headers=headers, json=data)
+    print(f"GitHub API Response: {response.text}")
 
 
     return response.status_code == 201
@@ -106,7 +107,7 @@ class Post(db.Model):
     image = db.Column(db.String(100))
     slug = db.Column(db.String(100), unique=True, nullable=False)
 
-
+# Create post and delete post routes
 @app.route('/create', methods=['GET', 'POST'])
 @login_required
 @admin_required
@@ -147,6 +148,7 @@ def create_post():
         return redirect(url_for('index'))
 
     return render_template('create_post.html')
+
 
 @app.route('/delete/<string:slug>', methods=['GET', 'POST'])
 @login_required
