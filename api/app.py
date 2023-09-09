@@ -42,6 +42,41 @@ def create_github_commit(repo_owner, repo_name, file_path, file_content, commit_
 
     return response.status_code == 201
 
+#delete from github
+def delete_github_file(repo_owner, repo_name, file_path, commit_message, github_token):
+    # Construct the API URL for deleting a file
+    api_url = f'https://api.github.com/repos/{repo_owner}/{repo_name}/contents/{file_path}'
+
+    # Prepare the request headers
+    headers = {
+        'Authorization': f'token {github_token}',
+        'Accept': 'application/vnd.github.v3+json'
+    }
+
+    # Retrieve the current file details
+    response = requests.get(api_url, headers=headers)
+
+    if response.status_code == 200:
+        # Get the current file's sha (required for deletion)
+        file_details = response.json()
+        sha = file_details['sha']
+
+        # Prepare the request data for deletion
+        data = {
+            'message': commit_message,
+            'sha': sha
+        }
+
+        # Delete the file from GitHub
+        response = requests.delete(api_url, headers=headers, json=data)
+
+        if response.status_code == 200:
+            return True
+        else:
+            return False
+    else:
+        return False
+
 # User model for Admin
 class Admin(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
