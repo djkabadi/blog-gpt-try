@@ -150,16 +150,29 @@ def create_post():
     return render_template('create_post.html')
 
 
+# delete route
 @app.route('/delete/<string:slug>', methods=['GET', 'POST'])
 @login_required
 @admin_required
 def delete_post(slug):
     post = Post.query.filter_by(slug=slug).first()
+
     if request.method == 'POST':
-        db.session.delete(post)
-        db.session.commit()
-        flash('Post deleted successfully!', 'success')
+        # Delete the image from GitHub when post is deleted
+        repo_owner = 'djkabadi'
+        repo_name = 'mapica'
+        file_path = f'images/{slugify(post.title)}.jpg'  # Adjust the path as needed
+        commit_message = 'Deleted image'
+
+        if delete_github_file(repo_owner, repo_name, file_path, commit_message, github_token):
+            db.session.delete(post)
+            db.session.commit()
+            flash('Post and associated image deleted successfully!', 'success')
+        else:
+            flash('Error deleting image from GitHub', 'danger')
+
         return redirect(url_for('index'))
+
     return render_template('delete_post.html', post=post)
 
 @app.route('/edit/<string:slug>', methods=['GET', 'POST'])
