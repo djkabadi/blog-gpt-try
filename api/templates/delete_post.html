@@ -11,7 +11,7 @@
         <div class="post">
             <h2>{{ post.title }}</h2>
             {% if post.image %}
-            <img src="{{ url_for('static', filename='images/' + post.image) }}" alt="{{ post.title }}">
+            <img src="{{ post.image }}" alt="Image">
             {% endif %}
             <p>{{ post.content }}</p>
         </div>
