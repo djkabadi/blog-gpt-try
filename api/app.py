@@ -22,7 +22,7 @@ login_manager.login_view = 'admin_login'
 
 # Define the GitHub API endpoint and token
 GITHUB_API_URL = 'https://api.github.com'
-github_token = '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'
+github_token = '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'
 
 # Helper function to commit a file to a GitHub repository
 def create_github_commit(repo_owner, repo_name, file_path, file_content, commit_message, github_token):
@@ -124,7 +124,7 @@ def create_post():
             # Commit the image to GitHub
             repo_owner = 'djkabadi'
             repo_name = 'pikipiki'
-            file_path = f'{slugify(title)}.jpg'  # Adjust the path as needed
+            file_path = f'images/{slugify(title)}.jpg'  # Adjust the path as needed
             commit_message = 'Added uploaded image'
 
             print(f"File Path: {file_path}")
