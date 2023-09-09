@@ -162,9 +162,6 @@ def create_post():
         return redirect(url_for('index'))
 
     return render_template('create_post.html')
-```
-
-This updated version includes print statements to help you debug the execution and identify any potential issues. Please check the console output for these print statements while testing the route to see if everything is functioning as expected. If you encounter any errors or unexpected behavior, please provide the specific error messages or issues you're facing so that I can assist you further.
 
 @app.route('/delete/<string:slug>', methods=['GET', 'POST'])
 @login_required
