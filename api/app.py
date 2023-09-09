@@ -106,22 +106,7 @@ class Post(db.Model):
     image = db.Column(db.String(100))
     slug = db.Column(db.String(100), unique=True, nullable=False)
 
-# Create post and delete post routes
-The `create_post` route you provided seems to be correctly structured for creating a new blog post with a title, content, and an associated image. However, there are a few areas to double-check for potential issues:
 
-1. **GitHub Token**: Ensure that the `github_token` variable is defined and contains a valid GitHub Personal Access Token with the necessary permissions to create and update files in the GitHub repository.
-
-2. **File Path**: Verify that the `file_path` variable is constructed correctly, including the folder structure and file extension. It should match the structure of your GitHub repository.
-
-3. **Image Content**: Make sure that `image_content` contains the binary content of the uploaded image. You can print its length to verify that it's not empty.
-
-4. **GitHub Repository**: Ensure that the GitHub repository specified in `repo_owner` and `repo_name` variables exists and is accessible by the provided token.
-
-5. **Database Commit**: Verify that the `new_post` object is successfully created and committed to the database. You can add some print statements to check if it's being executed as expected.
-
-Here's an updated version of your `create_post` route with some additional debugging statements:
-
-```python
 @app.route('/create', methods=['GET', 'POST'])
 @login_required
 @admin_required
